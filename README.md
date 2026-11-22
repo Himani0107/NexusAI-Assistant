@@ -1,6 +1,7 @@
 NEXUSAI ASSISTANT
 Multi-Tier Conversational AI and Document Retrieval-Augmented Generation (RAG) System
 
+Live Demo: https://nexusai-assistant.onrender.com
 
 OVERVIEW
 ================================================================================
