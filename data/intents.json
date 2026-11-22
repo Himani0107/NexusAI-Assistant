@@ -1,0 +1,76 @@
+{
+  "intents": [
+    {
+      "tag": "greeting",
+      "patterns": [
+        "hi",
+        "hello",
+        "hey there",
+        "good morning",
+        "good afternoon",
+        "good evening",
+        "hi assistant",
+        "hello there"
+      ],
+      "responses": [
+        "Hello! I'm your Hybrid AI Assistant. Ask me anything or upload a PDF/TXT document to query it."
+      ]
+    },
+    {
+      "tag": "identity",
+      "patterns": [
+        "who are you",
+        "what are you",
+        "introduce yourself",
+        "how do you work",
+        "explain your architecture",
+        "what can you do"
+      ],
+      "responses": [
+        "I am a 3-tier Hybrid AI Assistant: Tier 1 uses local TF-IDF + Cosine Similarity for instant replies, Tier 2 uses Gemini 3.5 Flash with custom document RAG, and Tier 3 falls back to live web search."
+      ]
+    },
+    {
+      "tag": "time_date",
+      "patterns": [
+        "what time is it",
+        "tell me the current time",
+        "what is the time right now",
+        "what is todays date",
+        "tell me todays date",
+        "current date and time"
+      ],
+      "responses": [
+        "DYNAMIC_TIME"
+      ]
+    },
+    {
+      "tag": "thanks",
+      "patterns": [
+        "thanks",
+        "thank you",
+        "thank you so much",
+        "thanks a lot",
+        "i appreciate it",
+        "much appreciated"
+      ],
+      "responses": [
+        "You're welcome! Let me know if you need anything else."
+      ]
+    },
+    {
+      "tag": "goodbye",
+      "patterns": [
+        "bye",
+        "goodbye",
+        "see you later",
+        "talk to you later",
+        "exit",
+        "quit"
+      ],
+      "responses": [
+        "Goodbye! Feel free to come back anytime."
+      ]
+    }
+  ]
+}

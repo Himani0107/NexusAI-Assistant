@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexusAI Assistant</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <!-- Lightweight Markdown parser so Gemini responses render headings, lists, and bold cleanly -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    /* Clean Markdown spacing inside bot bubbles */
+    .msg.bot .bubble h1,
+    .msg.bot .bubble h2,
+    .msg.bot .bubble h3 {
+      margin: 0.6em 0 0.3em;
+      font-size: 1.05em;
+      color: #60a5fa;
+    }
+    .msg.bot .bubble p {
+      margin: 0.35em 0;
+    }
+    .msg.bot .bubble p:first-child {
+      margin-top: 0;
+    }
+    .msg.bot .bubble p:last-child {
+      margin-bottom: 0;
+    }
+    .msg.bot .bubble ul,
+    .msg.bot .bubble ol {
+      margin: 0.35em 0 0.35em 1.25em;
+      padding: 0;
+    }
+    .msg.bot .bubble li {
+      margin: 0.2em 0;
+    }
+    .msg.bot .bubble code {
+      background: rgba(15, 23, 42, 0.75);
+      padding: 0.15em 0.35em;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    .msg.bot .bubble pre {
+      background: rgba(15, 23, 42, 0.85);
+      padding: 0.75em;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 0.5em 0;
+    }
+
+    /* Sleek dark scrollbar */
+    .chat-box::-webkit-scrollbar {
+      width: 6px;
+    }
+    .chat-box::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .chat-box::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 999px;
+    }
+    .chat-box::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* 1-click demo prompt chips */
+    .quick-prompts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .chip {
+      background: #1e293b;
+      color: #94a3b8;
+      border: 1px solid #334155;
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .chip:hover {
+      background: #273549;
+      color: #f8fafc;
+      border-color: #38bdf8;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <div>
+        <h1>NexusAI Assistant</h1>
+        <p class="subtitle">Multi-Tier Intent Engine • Gemini 3.5 Flash RAG • Web Fallback</p>
+      </div>
+      <div class="upload-box">
+        <input type="file" id="docInput" accept=".pdf,.txt" hidden />
+        <button onclick="document.getElementById('docInput').click()" class="upload-btn">
+          + Upload PDF/TXT
+        </button>
+        <span id="docStatus">No document indexed</span>
+      </div>
+    </header>
+
+    <main id="chatBox" class="chat-box">
+      <div class="msg bot">
+        <div class="bubble">
+          Welcome to <b>NexusAI Assistant</b>! Ask a quick intent like <b>"who are you"</b> (resolved locally in ~10ms via Tier 1 NLP), upload a PDF/TXT for grounded Q&amp;A (Tier 2 Gemini 3.5 RAG), or ask any open-domain question.
+        </div>
+      </div>
+    </main>
+
+    <div class="quick-prompts">
+      <button type="button" class="chip" onclick="sendPreset('What time is it?')">⚡ Tier 1: Local Time</button>
+      <button type="button" class="chip" onclick="sendPreset('Summarize my uploaded document')">📄 Tier 2: Summarize PDF</button>
+      <button type="button" class="chip" onclick="sendPreset('Explain simulated annealing in simple terms')">🧠 Tier 2: Gemini 3.5</button>
+    </div>
+
+    <form id="chatForm" class="input-bar">
+      <input type="text" id="userInput" placeholder="Ask NexusAI a question..." autocomplete="off" required />
+      <button type="submit" id="sendBtn">Send</button>
+    </form>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chatBox");
+    const chatForm = document.getElementById("chatForm");
+    const userInput = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const docInput = document.getElementById("docInput");
+    const docStatus = document.getElementById("docStatus");
+
+    if (typeof marked !== "undefined") {
+      marked.setOptions({ breaks: true, gfm: true });
+    }
+
+    docInput.addEventListener("change", async () => {
+      if (!docInput.files.length) return;
+      const formData = new FormData();
+      formData.append("file", docInput.files[0]);
+      docStatus.textContent = "Indexing...";
+
+      try {
+        const res = await fetch("/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        docStatus.textContent = data.message || data.error;
+      } catch (err) {
+        docStatus.textContent = "Upload failed. Check server connection.";
+      }
+    });
+
+    function sendPreset(promptText) {
+      userInput.value = promptText;
+      chatForm.requestSubmit();
+    }
+
+    chatForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      appendMessage("user", text);
+      userInput.value = "";
+      sendBtn.disabled = true;
+
+      const typingNode = appendTypingIndicator();
+
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+        const data = await res.json();
+        typingNode.remove();
+
+        const confText = data.confidence !== null && data.confidence !== undefined
+          ? ` • Score: ${data.confidence}`
+          : "";
+        const meta = `${data.tier}${confText} • ${data.latency_ms}ms`;
+        appendMessage("bot", data.reply, meta);
+      } catch (err) {
+        typingNode.remove();
+        appendMessage("bot", "Network error reaching server. Please try again.");
+      } finally {
+        sendBtn.disabled = false;
+        userInput.focus();
+      }
+    });
+
+    function appendTypingIndicator() {
+      const wrapper = document.createElement("div");
+      wrapper.className = "msg bot";
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.style.opacity = "0.7";
+      bubble.textContent = "Thinking...";
+      wrapper.appendChild(bubble);
+      chatBox.appendChild(wrapper);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      return wrapper;
+    }
+
+    function appendMessage(sender, text, meta = null) {
+      const wrapper = document.createElement("div");
+      wrapper.className = `msg ${sender}`;
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+
+      if (sender === "bot" && typeof marked !== "undefined") {
+        bubble.innerHTML = marked.parse(text);
+      } else {
+        bubble.textContent = text;
+      }
+      wrapper.appendChild(bubble);
+
+      if (meta) {
+        const badge = document.createElement("div");
+        badge.className = "telemetry-badge";
+        badge.textContent = meta;
+        wrapper.appendChild(badge);
+      }
+
+      chatBox.appendChild(wrapper);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script>
+</body>
+</html>
