@@ -13,7 +13,7 @@
         "hello there"
       ],
       "responses": [
-        "Hello! I'm your Hybrid AI Assistant. Ask me anything or upload a PDF/TXT document to query it."
+        "Hello! I'm your NexusAI Assistant. Ask me anything or upload a PDF/TXT document to query it."
       ]
     },
     {
@@ -27,7 +27,7 @@
         "what can you do"
       ],
       "responses": [
-        "I am a 3-tier Hybrid AI Assistant: Tier 1 uses local TF-IDF + Cosine Similarity for instant replies, Tier 2 uses Gemini 3.5 Flash with custom document RAG, and Tier 3 falls back to live web search."
+        "I am a 3-tier NexusAI Assistant: Tier 1 uses local TF-IDF + Cosine Similarity for instant replies, Tier 2 uses Gemini 3.5 Flash with custom document RAG, and Tier 3 falls back to live web search."
       ]
     },
     {
