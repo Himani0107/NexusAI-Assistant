@@ -18,7 +18,7 @@ class GeminiClient:
         self.client = (
             genai.Client(
                 api_key=self.api_key,
-                http_options=types.HttpOptions(timeout=12000),  # 12s fail-fast (above 10s API min)
+                http_options=types.HttpOptions(timeout=20000),  # 20s fail-fast (above 10s API min)
             )
             if self.api_key
             else None
