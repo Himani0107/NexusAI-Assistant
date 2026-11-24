@@ -90,6 +90,18 @@ def chat():
     except Exception as e:
         print(f"[Tier 2 Gemini Error]: {e}")
 
+    # 3.5 Offline RAG Rescue (if Gemini is down, still return the matched PDF excerpt!)
+    if rag_chunks:
+        latency_ms = round((time.perf_counter() - start_time) * 1000, 1)
+        best = rag_chunks[0]
+        _update_history(history, user_query, best["text"])
+        return jsonify({
+            "reply": f"**From Document [Page {best['page']}]:**\n{best['text']}",
+            "tier": "Tier 3: Offline RAG Excerpt",
+            "confidence": best["score"],
+            "latency_ms": latency_ms,
+        })
+
     # 4. Tier 3: Zero-Key Wikipedia Fallback
     wiki_reply = search_wikipedia(user_query)
     latency_ms = round((time.perf_counter() - start_time) * 1000, 1)
