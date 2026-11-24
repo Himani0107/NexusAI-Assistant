@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -57,14 +57,15 @@ class LocalNLPRouter:
         return {"matched": False, "confidence": round(best_score, 3)}
 
     def _resolve_reply(self, tag: str) -> str:
-        now = datetime.now()
+        ist = timezone(timedelta(hours=5, minutes=30))
+        now = datetime.now(ist)
         if tag == "time_date":
-            return f"The current time is {now.strftime('%I:%M %p')} on {now.strftime('%B %d, %Y')}."
+            return f"The current time is {now.strftime('%I:%M %p')} IST on {now.strftime('%B %d, %Y')}."
         candidates = self.responses.get(tag, ["I'm here to help!"])
         reply = candidates[0]
         return (
             reply.replace("{time}", now.strftime("%I:%M %p"))
             .replace("{date}", now.strftime("%B %d, %Y"))
         )
-
+    
     
