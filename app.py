@@ -10,6 +10,11 @@ from core.web_fallback import search_wikipedia
 
 load_dotenv()
 
+if not os.getenv("GEMINI_API_KEY"):
+    print("⚠️  WARNING: GEMINI_API_KEY not found in .env! Tier 2 will fall back to Tier 3.")
+else:
+    print("✅ GEMINI_API_KEY loaded successfully.")
+
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key-change-in-prod")
 
